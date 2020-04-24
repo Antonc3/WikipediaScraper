@@ -1,0 +1,23 @@
+{
+  "name": "wikipediascraper",
+  "version": "1.0.0",
+  "description": "Scrapes through Wikipedia then allows user to search for key words inside of scraped files",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2004Anton/WikipediaScraper.git"
+  },
+  "author": "Anton C",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/2004Anton/WikipediaScraper/issues"
+  },
+  "homepage": "https://github.com/2004Anton/WikipediaScraper#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "request-promise": "^4.2.5"
+  }
+}
