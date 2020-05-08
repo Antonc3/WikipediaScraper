@@ -135,7 +135,29 @@ function cut_excess(url){
 }
 
 function clear_collapsed(page){
-	let page0 = page.split(/<.*?>/s);
+	// let page0 = page.split(/<.*?>/s);
+	let page0 = [];
+	for(let i = 0; i < page.length;){
+		if(page[i] == '<'){
+			let before = i;
+			for(i; i < page.length; i++){
+				if(page[i] == '>') {
+					page0.push(page.substring(before,i+1));
+					break;
+				}
+			}
+		}
+		else{
+			let before = i;
+			for(i; i < page.length; i++){
+				if(page[i] == '<'){
+					page0.push(page.substring(before,i));
+					break;
+				}
+
+			}
+		}
+	}
 	let start = 0;
 	let cnt = 0;
 	let active = false;
@@ -161,7 +183,7 @@ function clear_collapsed(page){
 }
 
 function clean_page(page,id){
-	// page = clear_collapsed(page);
+	page = clear_collapsed(page);
 	page = page
 		.replace(/(<script>)([\s\S]*?)(<\/script>)/g," ")
 		.replace(/<[^>]+>/g," ")

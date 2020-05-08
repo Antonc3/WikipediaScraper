@@ -12,9 +12,10 @@ let words = [];
 for(let i = 4; i < process.argv.length; i++){
 	words[i-4] = process.argv[i];
 }
-console.log(words);
+// console.log(words);
 // let output = process.argv[3]
 let set = fs.openSync(settings);
+
 // console.log("len: ",process.argv.length);
 let pyr = fs.openSync(pyramind);
 
@@ -82,7 +83,7 @@ function get_files(word,file,os){
 		let tmp_off = offset;
 		let buffer = Buffer.alloc(100000);
 		let bytes_read = fs.readSync(file,buffer,0,buffer.length,tmp_off);
-		if(bytes_read == 0) return "not in file";
+		if(bytes_read == 0) return -1;
 		let nl = buffer.indexOf("\n");
 		if(nl == -1) nl = bytes_read;
 		let space = buffer.indexOf(" ");
@@ -155,42 +156,24 @@ function match_urls(id_list){
 	return ans;
 }
 
-// function find_sequence(str){
-// 	let new_word = str.split(" ");
-// 	let word_num;
-// 	for(let i = 0; i < new_word.length; i++){
-// 		let tmp = find_word(new_word[i]);
-// 		if(tmp == null){
-// 			return "";
-// 		}
-// 		else{
-// 			word_num[i] = tmp;
-// 		}
-// 	}
-// 	let cur = word_num[0];
-// 	for(let i =1; i < word_num.length; i++){
-// 		cur = intersect(cur,word_num[i]);
-// 	}
-// 	let ans;
-// 	for(let i = 0; i < cur.length; i++){
-//  		ans[i] = match_url(cur[i]);
-// 	}
-// 	return ans;
-// }
 
 function find_mult_words(wordlist){
 	let cur_links = find_word(wordlist[0]);
+	if(cur_links == -1){
+		return {status: "ERROR", msg: "Word is not in database"};
+	}
 	// console.log(wordlist[0],cur_links);
 	for(let i = 1; i < wordlist.length; i++){
 		let cur = find_word(wordlist[i]);
 		// console.log(cur);
-		if(cur == undefined){
-			return -1;
+		if(cur == -1){
+			return {status: "ERROR", msg: "Word is not in database"};
 		}
 		cur_links = intersect(cur_links,cur);
 	}
 	// console.log(cur_links);
-	return match_urls(cur_links);
+
+	return {status: "SUCCESS", links: match_urls(cur_links)};
 }
 
 // }
@@ -206,5 +189,6 @@ function find_mult_words(wordlist){
 // console.log(urls);
 // //console.log(ids)
 // console.log("fkjfahfaksghafsdaf",find_word("apple"));
-console.log(find_mult_words(words));
+let response = find_mult_words(words)
+console.log(JSON.stringify(response));
 // console.log(intersect([1,2,3,4,5,6,7],[2,3,5,6,10,15]));
