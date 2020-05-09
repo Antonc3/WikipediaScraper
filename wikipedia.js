@@ -132,45 +132,55 @@ function cut_excess(url){
 		}
 	}
 	return url;
-}
-
-function clear_collapsed(page){
+}function clear_collapsed(page){
 	// let page0 = page.split(/<.*?>/s);
 	let page0 = [];
-	for(let i = 0; i < page.length;){
+	for(let i = 0; i < page.length;i){
 		if(page[i] == '<'){
 			let before = i;
+			let done = false;
 			for(i; i < page.length; i++){
 				if(page[i] == '>') {
-					page0.push(page.substring(before,i+1));
+					page0.push(page.substring(before,++i));
+					done = true;
 					break;
 				}
 			}
+			if(!done){
+				page0.push(page.substring(before,++i));
+			}
+
 		}
 		else{
+			let done = false;
 			let before = i;
 			for(i; i < page.length; i++){
 				if(page[i] == '<'){
+					done=true;
 					page0.push(page.substring(before,i));
 					break;
 				}
-
+			}
+			if(!done){
+				page0.push(page.substring(before,i));
 			}
 		}
 	}
+	// console.log(page0);
 	let start = 0;
 	let cnt = 0;
 	let active = false;
 	for(let i = 0; i < page0.length; i++){
-		if(page0[i].substring(0,5) == "<table"&& page0.includes("mw-collapsible")&&active){
+		// console.log(page0[i].substring(0,6));
+		if(page0[i].substring(0,6) == "<table"&& page0[i].includes("mw-collapsible")&&!active){
 			active = true;
 			start = i;
 			cnt++;
 		}
-		else if(page0[i].substring(0,5) == "<table"&& active){
+		else if(page0[i].substring(0,6) == "<table"&& active){
 			cnt++;
 		}
-		else if(page0[i].substring(0,6) == '</table' && active){
+		else if(page0[i].substring(0,7) == '</table' && active){
 			cnt--;
 		}
 		if(active && cnt == 0){
@@ -179,9 +189,11 @@ function clear_collapsed(page){
 			active = false;
 		}
 	}
+	if(active){
+		page0 = page0.slice(0,start);
+	}
 	return page0.join('');
 }
-
 function clean_page(page,id){
 	page = clear_collapsed(page);
 	page = page
