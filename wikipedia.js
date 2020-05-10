@@ -82,9 +82,9 @@ function open_source_code(url){
 		return 1;
 	}).catch((err) =>{
 		// console.log("ERROR: updating search");
-		console.log(err);
-		// update_search();
+		console.log(err);		// update_search();
 		// console.log("Finished Seach update");
+		process_running--;
 	}).finally(function(){
 		update_search();
 		// console.log("updated search");
@@ -257,7 +257,7 @@ function update_search(){
 	while(operations < op_max && process_running < process_max && !to_be_checked.isEmpty()){
 		let next_url = to_be_checked.pop();
 		open_source_code(next_url);
-		console.log(operations + ": processes running" + process_running + next_url + ", tbc: "+ to_be_checked.size());
+		console.log(operations + " " + next_url);
 		process_running++;
 	}
 	// console.log("No more links to be checked");
