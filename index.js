@@ -17,9 +17,8 @@ app.get('/q', (req, res) => {
 		result += data;
 
 	});
-
 	search.on('close', (code) => {
-		let html = `<h1>Result of Search for "${req.query.q}"</h1>`;
+		let html = `<h1>Result of Search for "${req.query.q}"</h1><br><form action="q">search: <input name="q" /><input type="submit" /></form>`;
 		result = JSON.parse(result);
 		if(result.status == 'ERROR'){
 			html+=result.msg;
@@ -29,7 +28,6 @@ app.get('/q', (req, res) => {
 		}
 		res.send(html);
 	});
-
 });
 
 app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`))

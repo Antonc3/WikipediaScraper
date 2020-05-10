@@ -31,7 +31,7 @@ const entities = new Entities();
 
 let seen = new Map();
 let operations = 0;
-let op_max = 100;
+let op_max = 1000000;
 
 
 let file_num_cnt = 100000;
@@ -42,7 +42,7 @@ let file_name_num = "index.txt";
 
 
 let process_running = 0;
-let process_max = 5;
+let process_max = 10;
 class Stack {
 	constructor(){
 		this.items = new Array();
@@ -58,6 +58,9 @@ class Stack {
 	}
 	peek(){
 		return this.items[this.items.length-1];
+	}
+	size(){
+		return this.items.length;
 	}
 	isEmpty(){
 		return this.items.length == 0;
@@ -76,23 +79,18 @@ function open_source_code(url){
 	rp(url)
 	.then(response => {
 		get_urls(response,url);
-	}) 
+		return 1;
+	}).catch((err) =>{
+		// console.log("ERROR: updating search");
+		console.log(err);
+		// update_search();
+		// console.log("Finished Seach update");
+	}).finally(function(){
+		update_search();
+		// console.log("updated search");
+	});
 }
-function read_line(file,line){
-	//function that reads line
-}
-function read_lines(file, start_line,end_line){
-	let lines = "";
-	for(let i = start_line; i < end_line; i++){
-		lines+= read_line(file,i);
-	}
-	return lines;
-}
-function get_file_url(docid){
-	let str = read_line(file_name_num,docid-file_num_start);
-	let newid = "" + docid;
-	return str.substring(newid.length,str.length);
-}
+
 function array_equals(page,ind,str){
 	let cnt = 0;
 	for(let i = ind; i <ind+str.length;i++){
@@ -132,7 +130,8 @@ function cut_excess(url){
 		}
 	}
 	return url;
-}function clear_collapsed(page){
+}
+function clear_collapsed(page){
 	// let page0 = page.split(/<.*?>/s);
 	let page0 = [];
 	for(let i = 0; i < page.length;i){
@@ -256,11 +255,12 @@ function get_urls(page,cur_url){
 
 function update_search(){
 	while(operations < op_max && process_running < process_max && !to_be_checked.isEmpty()){
-		console.log(operations);
 		let next_url = to_be_checked.pop();
 		open_source_code(next_url);
+		console.log(operations + ": processes running" + process_running + next_url + ", tbc: "+ to_be_checked.size());
 		process_running++;
 	}
+	// console.log("No more links to be checked");
 }
 function test(url){
 	rp(url)

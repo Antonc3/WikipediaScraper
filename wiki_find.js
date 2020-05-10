@@ -104,6 +104,7 @@ function find_word(word){
 		// console.log(cur_page);
 		offset = find_in_file(word,cur_page,offset);
 		cur_page = phonebook[--cur_page_num];
+		// console.log("done: " + cur_page_num);
 	}
 	return get_files(word,cur_page,offset);
 }
@@ -128,7 +129,29 @@ function intersect(arr1, arr2){
 	// ans.sort();
 	return ans;
 }
-function match_url(id){
+// function match_url(ids){
+// 	let pos = 0;
+// 	for (let line_num = 0;; line_num++){
+// 		let tmp_pos = pos;
+// 		let buffer = Buffer.alloc(100000);
+// 		let bytes_read = fs.readSync(index,buffer,0,buffer.length,tmp_pos);
+// 		if(bytes_read == 0) break;
+// 		let nl = buffer.indexOf('\n');
+// 		if(nl == -1) nl = bytes_read;
+
+// 		// console.log(line_num + file_num_start);
+// 		if(line_num+file_num_start == id){
+// 			let space = buffer.indexOf(' ');
+// 			return buffer.subarray(space,nl).toString('utf8');
+// 		}
+// 		pos += nl+1;
+// 	}
+// 	return "";
+// }
+function match_urls(id_list){
+	let ans = [];
+	let cur = 0;
+	let cur_id = id_list[cur];
 	let pos = 0;
 	for (let line_num = 0;; line_num++){
 		let tmp_pos = pos;
@@ -139,21 +162,25 @@ function match_url(id){
 		if(nl == -1) nl = bytes_read;
 
 		// console.log(line_num + file_num_start);
-		if(line_num+file_num_start == id){
+		if(line_num+file_num_start == cur_id){
 			let space = buffer.indexOf(' ');
-			return buffer.subarray(space,nl).toString('utf8');
+			ans[cur]= buffer.subarray(space,nl).toString('utf8');
+			cur++;
+			cur_id = id_list[cur];
+		}
+		if(cur >= id_list.length){
+			break;
 		}
 		pos += nl+1;
 	}
-	return "";
-}
-function match_urls(id_list){
-	let ans = [];
-	for(let i = 0; i < id_list.length; i++){
-		ans[i] = match_url(id_list[i]);
-		// console.log(ans[i]);
-	}
+	// console.log(ans.length + " " + id_list.length);
 	return ans;
+	// let ans = [];
+	// for(let i = 0; i < id_list.length; i++){
+	// 	ans[i] = match_url(id_list[i]);
+	// 	// console.log(ans[i]);
+	// }
+	// return ans;
 }
 
 
@@ -170,10 +197,13 @@ function find_mult_words(wordlist){
 			return {status: "ERROR", msg: "Word is not in database"};
 		}
 		cur_links = intersect(cur_links,cur);
+		if(cur_links.length == 0){
+			return {status: "ERROR", msg: "Words are not in the same file"};
+		}
 	}
 	// console.log(cur_links);
 
-	return {status: "SUCCESS", links: match_urls(cur_links)};
+	return {status: "SUCCESS", links: match_urls(cur_links).sort()};
 }
 
 // }
