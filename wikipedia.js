@@ -31,8 +31,7 @@ const entities = new Entities();
 
 let seen = new Map();
 let operations = 0;
-let op_max = 1000;
-
+let op_max = 50;
 
 let file_num_cnt = 100000;
 let file_num_start = 100000;
@@ -42,7 +41,7 @@ let file_name_num = "index.txt";
 
 
 let process_running = 0;
-let process_max = 4;
+let process_max = 10;
 let stk = "stack.txt";
 let stack_fd = fs.openSync(stk);
 class Stack {

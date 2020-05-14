@@ -14,6 +14,8 @@ const fd_dst = fs.openSync(dst,'w');
 console.log(fd);
 
 
+let str = "";
+let str_len = 0;
 let position = 0;
 for(line_number = 0;; line_number++) {
 	let buffer = Buffer.alloc(10000);
@@ -22,15 +24,20 @@ for(line_number = 0;; line_number++) {
 	if (bytes_read == 0) break;
 	let nl = buffer.indexOf('\n');
 	if(nl == -1) nl = bytes_read;
-	// console.log(line_number,position,nl,position+nl+1,buffer.subarray(0,nl).toString());
 	if(line_number%line_skip == 0){
 		let first_space = buffer.indexOf(" ");
 		let to_write = [buffer.subarray(0,first_space), position].join(" ") + "\n";
-		//let to_write = buffer.subarray(0,first_space) +" " +position;
-		fs.writeSync(fd_dst,to_write);
+		if(str_len + to_write.length > Math.pow(2,52)-1){
+			fs.writeSync(fd_dst,str);
+			str_len = 0;
+			str = "";
+		}
+		str_len += to_write.length;
+		str += to_write;
 	}
 	position += nl+1;
 }
+fs.writeSync(fd_dst,str);
 fs.appendFile(pyramind,'\n' + dst, (err) => {
 	if(err) throw err;
 });
