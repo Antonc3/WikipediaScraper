@@ -31,7 +31,7 @@ const entities = new Entities();
 
 let seen = new Map();
 let operations = 0;
-let op_max = 1000000;
+let op_max = 1000;
 
 
 let file_num_cnt = 100000;
@@ -42,7 +42,9 @@ let file_name_num = "index.txt";
 
 
 let process_running = 0;
-let process_max = 10;
+let process_max = 4;
+let stk = "stack.txt";
+let stack_fd = fs.openSync(stk);
 class Stack {
 	constructor(){
 		this.items = new Array();
@@ -71,23 +73,58 @@ class Stack {
 		}
 	} 	
 }
-
 let to_be_checked = new Stack();
-to_be_checked.push('https://wikipedia.org/wiki/Main_Page');
-seen.set(to_be_checked.peek(),-1);
+function resume_search(){
+	let fd  = fs.openSync(file_name_num);
+	let pos = 0;
+	let line;
+	for(line = 0;; line++){
+		let tmp_pos = pos;
+		let buffer = Buffer.alloc(100000);
+		let bytesRead = fs.readSync(fd,buffer,0,buffer.length,tmp_pos);
+		if(bytesRead == 0){
+			break;
+		}
+		let nl = buffer.indexOf('\n');
+		if(nl == -1){
+			nl = bytesRead;
+		}
+		let space = buffer.indexOf(' ');
+		let url = buffer.subarray(space+1,nl).toString('utf8');
+		console.log(url);
+		seen.set(url,-1);
+		pos += 1 + nl;
+	}
+	operations = line;
+	file_num_cnt = file_num_start +line;
+	pos = 0;
+	for(line = 0;; line++){
+		let tmp_pos = pos;
+		let buffer = Buffer.alloc(100000);
+		let bytesRead = fs.readSync(stack_fd,buffer,0,buffer.length,tmp_pos);
+		if(bytesRead == 0){
+			break;
+		}
+		let nl = buffer.indexOf('\n');
+		let url = buffer.subarray(0,nl).toString('utf8');
+		if(seen.get(url) != -1){
+			to_be_checked.push(url);
+		}
+		pos += 1 + nl;
+	}
+}
+
 function open_source_code(url){
 	rp(url)
 	.then(response => {
 		get_urls(response,url);
 		return 1;
 	}).catch((err) =>{
-		// console.log("ERROR: updating search");
-		console.log(err);		// update_search();
-		// console.log("Finished Seach update");
+		console.log(err);
 		process_running--;
+		operations--;
 	}).finally(function(){
 		update_search();
-		// console.log("updated search");
 	});
 }
 
@@ -105,7 +142,6 @@ function array_equals(page,ind,str){
 function get_quotation(page,ind){
 	let str = "";
 	while(page[ind] != '"'){
-		//console.log(str);
 		str += page[ind];
 		ind++;
 	}
@@ -131,8 +167,8 @@ function cut_excess(url){
 	}
 	return url;
 }
-function clear_collapsed(page){
-	// let page0 = page.split(/<.*?>/s);
+
+function find_orig_link(page,cur_url){
 	let page0 = [];
 	for(let i = 0; i < page.length;i){
 		if(page[i] == '<'){
@@ -165,12 +201,52 @@ function clear_collapsed(page){
 			}
 		}
 	}
-	// console.log(page0);
+	for(let i = 0; i < page0.length; i++){
+		if(page0[i].substring(0,27) =='<link rel="canonical" href='){
+			return get_quotation(page0[i],28);
+		}
+	}
+	return cur_url;
+}
+//mainly used to clear the tables at the bottom of the wikipedia page, but clears everything labelled with 'mw-collapsed'
+function clear_collapsed(page){
+	let page0 = [];
+	for(let i = 0; i < page.length;i){
+		if(page[i] == '<'){
+			let before = i;
+			let done = false;
+			for(i; i < page.length; i++){
+				if(page[i] == '>') {
+					page0.push(page.substring(before,++i));
+					done = true;
+					break;
+				}
+			}
+			if(!done){
+				page0.push(page.substring(before,++i));
+			}
+
+		}
+		else{
+			let done = false;
+			let before = i;
+			for(i; i < page.length; i++){
+				if(page[i] == '<'){
+					done=true;
+					page0.push(page.substring(before,i));
+					break;
+				}
+			}
+			if(!done){
+				page0.push(page.substring(before,i));
+			}
+		}
+	}
+	
 	let start = 0;
 	let cnt = 0;
 	let active = false;
 	for(let i = 0; i < page0.length; i++){
-		// console.log(page0[i].substring(0,6));
 		if(page0[i].substring(0,6) == "<table"&& page0[i].includes("mw-collapsible")&&!active){
 			active = true;
 			start = i;
@@ -193,6 +269,7 @@ function clear_collapsed(page){
 	}
 	return page0.join('');
 }
+//used to clear as much excess as possible including the things in <> brackets
 function clean_page(page,id){
 	page = clear_collapsed(page);
 	page = page
@@ -213,26 +290,24 @@ function clean_page(page,id){
 }
 
 function get_urls(page,cur_url){
-	//let page = open_source_code(url);
+	let canonical_url = find_orig_link(page,cur_url);
+	if(seen.get(canonical_url)==-1 && canonical_url != cur_url){
+		process_running--;
+		return;
+	}
+	seen.set(canonical_url,-1);
 	for(let i = 0; i < page.length; i++){
-		//console.log(i);
 			if(array_equals(page,i,'"/wiki/')){
 				i++;
 				let pulled_url = get_quotation(page,i);
-				//i+=pulled_url.length-1;
 				let size = pulled_url.length;
-				let shouldPush = false;
-
 				pulled_url = cut_excess(pulled_url);
 				let new_url = "https://wikipedia.org" + pulled_url;
 				if(seen.get(new_url) != -1 && pulled_url.length >= 7){
-					shouldPush = true;
-				}
-				//console.log(seen.get(new_url));
-				if(shouldPush){
-					// console.log(new_url);
 					seen.set(new_url, -1);
-					// console.log(seen.get(new_url));
+					fs.appendFile(stk,new_url + '\n', (err)=>{
+						if(err)throw err;
+					});
 					to_be_checked.push(new_url);
 				}
 		}
@@ -241,23 +316,20 @@ function get_urls(page,cur_url){
 	page = clean_page(page,id_num).toLowerCase();
 	fs.appendFile("Wikisort.txt",page,(err) => {
 	  if (err) throw err;
-	  //console.log('The "data to append" was appended to file!');
 	});
-	fs.appendFile(file_name_num,"" + id_num +" "+ cur_url + "\n",(err) => {
+	fs.appendFile(file_name_num,"" + id_num +" "+ canonical_url + "\n",(err) => {
 	  if (err) throw err;
-	  //console.log('The "data to append" was appended to file!');
 	});
 	file_num_cnt++;
-	operations++;
 	process_running--;
-	update_search();
 }
-
+//called at the end in order to update the search and refresh it
 function update_search(){
 	while(operations < op_max && process_running < process_max && !to_be_checked.isEmpty()){
 		let next_url = to_be_checked.pop();
 		open_source_code(next_url);
 		console.log(operations + " " + next_url);
+		operations++;
 		process_running++;
 	}
 	// console.log("No more links to be checked");
@@ -270,7 +342,22 @@ function test(url){
 		});
 	})
 }
-fs.writeFile("Wikisort.txt",'',function(){});
-fs.writeFile(file_name_num,'',function(){});
-update_search();
-// test("https://en.wikipedia.org/wiki/English_Wikipedia")
+
+function resume_and_search(){
+	resume_search();
+	update_search();
+}
+
+function reset_then_search(){
+	fs.writeFile("Wikisort.txt",'',function(){});
+	fs.writeFile(file_name_num,'',function(){});
+	fs.writeFile(stk,'',function(){});
+	to_be_checked.push('https://wikipedia.org/wiki/Main_Page');
+	seen.set(to_be_checked.peek(),-1);
+	update_search();
+}
+
+// Two different modes, one is to reset the entire search and start over while the other is to resume, keeping the data you already had and adding in new data
+
+// resume_and_search();
+reset_then_search();
