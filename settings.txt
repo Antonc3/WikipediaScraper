@@ -5,3 +5,4 @@ stack stack.txt
 process_max 5
 pyramind pyramind.txt
 line_skip 1000
+resume true
