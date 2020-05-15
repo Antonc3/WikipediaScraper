@@ -1,2 +1,7 @@
-file_num_start 100000
+file_num_start 10000000
 file_name_num index.txt
+operations 1000
+stack stack.txt
+process_max 5
+pyramind pyramind.txt
+line_skip 1000
