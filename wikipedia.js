@@ -329,12 +329,12 @@ function clear_unnecessary(page){
 	}
 	
 	page0 = clear_bracket(page0,"table",["mw-collapsible"]);
-	page0 = clear_bracket(page0,"div",["reflist", 'class="noprint"',"navigation","printfooter","catlinks"]);
+	page0 = clear_bracket(page0,"div",["reflist", 'class="noprint"',"navigation","printfooter","catlinks",'class="portal']);
 	page0 = clear_bracket(page0,"sup",['class="reference"']);
 	page0 = clear_bracket(page0,"style",['']);
 	page0 = clear_bracket(page0,"a",["mw-jump-link",'class="external text']);
 	page0 = clear_bracket(page0,"span",['']);
-
+	page0 = clear_bracket(page0,"li",['class="Portal'])
 	return page0.join('');
 }
 function get_body(page){
@@ -407,7 +407,7 @@ function clean_page(page,id){
 		.replace(/<[^>]+>/g," ")
 		;
 	page = page
-		.replace(/[^\.\,]+ /g, "")
+		.replace(/'/g,"")
 		.replace(/[\d\W]+/ug," ")
 		.split(/\s+/s)
 		.filter(word => word)
