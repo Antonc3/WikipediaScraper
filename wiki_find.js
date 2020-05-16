@@ -79,6 +79,9 @@ function get_pyramind(){
 function find_in_file(word,file,os){
 	let offset = parseInt(os);
 	let last_num = 0;
+	// let ind = 0;
+	// let buffer = Buffer.alloc(100000);
+
 	while(true){
 		let tmp_off = offset;
 		let buffer = Buffer.alloc(100000);

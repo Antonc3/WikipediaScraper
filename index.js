@@ -1,6 +1,6 @@
 const express = require('express')
 const app = express()
-const port = 3000
+const port = process.env.PORT || 3000;
 const {spawn} = require('child_process')
 const {exec}  = require('child_process')
 
@@ -30,4 +30,4 @@ app.get('/q', (req, res) => {
 	});
 });
 
-app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`))
+app.listen(port, () => console.log(`Example app listening at http://anton.mastr.com:${port}`))

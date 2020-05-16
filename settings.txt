@@ -1,6 +1,6 @@
 file_num_start 10000000
 file_name_num index.txt
-operations 1000
+operations 100
 stack stack.txt
 process_max 5
 pyramind pyramind.txt
